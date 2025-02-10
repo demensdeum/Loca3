@@ -31,7 +31,7 @@ const Map: React.FC<Props> = React.memo(({ places, initialRegion }) => {
 
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = 'https://api-maps.yandex.ru/2.1/?lang=en_US';
+    script.src = 'https://api-maps.yandex.ru/2.1/?lang=en_US&apikey=your-api-key';
     script.async = true;
     
     script.onload = () => {
@@ -42,14 +42,41 @@ const Map: React.FC<Props> = React.memo(({ places, initialRegion }) => {
           controls: ['zoomControl', 'fullscreenControl']
         });
 
-        places.forEach(place => {
-          if (place.latitude && place.longitude) {
-            const placemark = new window.ymaps.Placemark([place.latitude, place.longitude], {
-              balloonContent: `<h3>${place.name}</h3><p>${place.address}</p>`
-            });
-            map.geoObjects.add(placemark);
+        const geocodeAndAddMarker = async (place: any) => {
+          try {
+            // If we already have coordinates, use them
+            if (place.latitude && place.longitude) {
+              const placemark = new window.ymaps.Placemark([place.latitude, place.longitude], {
+                balloonContent: `<h3>${place.name}</h3><p>${place.address}</p>`
+              });
+              map.geoObjects.add(placemark);
+              return;
+            }
+
+            // Otherwise, geocode the address
+            const geocodeResult = await window.ymaps.geocode(place.address);
+            const firstGeoObject = geocodeResult.geoObjects.get(0);
+
+            if (firstGeoObject) {
+              const coords = firstGeoObject.geometry.getCoordinates();
+              const placemark = new window.ymaps.Placemark(coords, {
+                balloonContent: `<h3>${place.name}</h3><p>${place.address}</p>`
+              });
+              map.geoObjects.add(placemark);
+
+              // Adjust map bounds to show all markers
+              map.setBounds(map.geoObjects.getBounds(), {
+                checkZoomRange: true,
+                zoomMargin: 50
+              });
+            }
+          } catch (error) {
+            console.error('Geocoding error for address:', place.address, error);
           }
-        });
+        };
+
+        // Process all places
+        places.forEach(place => geocodeAndAddMarker(place));
       });
     };
 

@@ -208,16 +208,15 @@ const PlacesScreen: React.FC<Props> = ({ navigation }) => {
       try {
         // Try to geocode the address to get coordinates
         const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-            newPlace.address
-          )}&key=YOUR_GOOGLE_MAPS_API_KEY`
+          `https://geocode-maps.yandex.ru/1.x/?format=json&apikey=your-api-key&geocode=${encodeURIComponent(newPlace.address)}`
         );
         const data = await response.json();
 
         let latitude, longitude;
-        if (data.results && data.results[0] && data.results[0].geometry) {
-          latitude = data.results[0].geometry.location.lat;
-          longitude = data.results[0].geometry.location.lng;
+        if (data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos) {
+          const [lon, lat] = data.response.GeoObjectCollection.featureMember[0].GeoObject.Point.pos.split(' ');
+          latitude = parseFloat(lat);
+          longitude = parseFloat(lon);
         }
 
         const newPlaces = [...places, { 
@@ -263,16 +262,15 @@ const PlacesScreen: React.FC<Props> = ({ navigation }) => {
       try {
         // Try to geocode the new address to get coordinates
         const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-            newPlace.address
-          )}&key=YOUR_GOOGLE_MAPS_API_KEY`
+          `https://geocode-maps.yandex.ru/1.x/?format=json&apikey=your-api-key&geocode=${encodeURIComponent(newPlace.address)}`
         );
         const data = await response.json();
 
         let latitude, longitude;
-        if (data.results && data.results[0] && data.results[0].geometry) {
-          latitude = data.results[0].geometry.location.lat;
-          longitude = data.results[0].geometry.location.lng;
+        if (data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos) {
+          const [lon, lat] = data.response.GeoObjectCollection.featureMember[0].GeoObject.Point.pos.split(' ');
+          latitude = parseFloat(lat);
+          longitude = parseFloat(lon);
         }
 
         const updatedPlaces = places.map(place =>
